@@ -25,16 +25,18 @@ public class GenerateTrainingDataMain {
         List<Path> deviceFiles = new ArrayList<>();
         OpenAIClient client = new OpenAIClient();
 
+        JSONArray trainingData = new JSONArray();
         try {
-            JSONArray trainingData = new JSONArray();
             FileUtil.readDataRecursively(devicesDir, deviceFiles);
             for (Path file : deviceFiles) {
                 if (file.toString().endsWith(".csv")) {
                     System.out.println("Found file: " + file.toString());
                     String data = FileUtil.readFileData(file.toString());
                     Set<String> availableAreas = getAvailableAreas(data);
-                    data = PROMPT_DATA_BEFORE + data.replace("%", "%%") + PROMPT_DATA_AFTER;
-                    data = String.format(data, getCurrentDateTime(), getCurrentDayOfWeek(), availableAreas.stream().findAny().get());
+                    String trainingInput = PROMPT_DATA_BEFORE_2 + data.replace("%", "%%");
+                    trainingInput = String.format(trainingInput, getCurrentDateTime(), getCurrentDayOfWeek(), availableAreas.stream().findAny().get());
+                    data = PROMPT_DATA_BEFORE + PROMPT_INSTRUCTION_1 + trainingInput + PROMPT_INSTRUCTION_2 + PROMPT_DATA_AFTER;
+                    trainingInput = PROMPT_DATA_BEFORE + trainingInput + PROMPT_DATA_AFTER;
                     // get the JSON from data
                     for (String command : COMMANDS) {
                         JSONObject json = JsonUtil.convertStringToJson(data);
@@ -46,14 +48,24 @@ public class GenerateTrainingDataMain {
                         JSONObject response = client.makeChatCompletionRequest(json.getJSONArray("data"));
                         System.out.println(response.toString());
 
-                        JSONObject trainingObject = getTrainingObject(json, response);
+                        JSONObject trainingInputObject = JsonUtil.convertStringToJson(trainingInput);
+                        trainingInputObject.getJSONArray("data").put(userCommand);
+                        JSONObject trainingObject = getTrainingObject(trainingInputObject, response);
                         trainingData.put(trainingObject);
                     }
+
+                    FileUtil.cutFile(file.toString(), file.toString().replace(DEVICES_DATA_DIR, DEVICES_DATA_ARCHIVE_DIR));
                 }
             }
             FileUtil.saveDataToFile(String.format(TRAINING_DATA_FILE_PATH, getCurrentDateTime()), trainingData.toString());
         } catch (Exception e) {
             e.printStackTrace();
+            // if any error occures, still save the currently collected training data.
+            try {
+                FileUtil.saveDataToFile(String.format(TRAINING_DATA_FILE_PATH, getCurrentDateTime()), trainingData.toString());
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
+            }
         }
 
     }

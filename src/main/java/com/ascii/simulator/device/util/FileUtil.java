@@ -42,4 +42,15 @@ public class FileUtil {
         List<String> lines = Files.readAllLines(path);
         return lines.stream().collect(Collectors.joining(TRAINING_DATA_FILE_FORMAT_REGEX_SPLIT_ESCAPE_NEWLINE));
     }
+
+    public static void cutFile(String sourceFilePath, String destinationFilePath) throws IOException {
+        Path sourcePath = Paths.get(sourceFilePath);
+        Path destinationPath = Paths.get(destinationFilePath);
+
+        // Copy the file to the destination location
+        Files.copy(sourcePath, destinationPath);
+
+        // Delete the original file
+        Files.delete(sourcePath);
+    }
 }
