@@ -5,7 +5,7 @@ import org.json.JSONArray;
 public class Constants {
     public static final String OPENAI_API_URL = "https://api.openai.com/v1";
     public static final String OPENAI_API_COMPLETION_PATH = OPENAI_API_URL + "/chat/completions";
-    public static final String OPENAI_API_KEY = "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";
+    public static final String OPENAI_API_KEY = "ADD_SECRETE_KEY_HERE";
     public static final String OPENAI_API_MODEL = "gpt-4o";
     public static final double OPENAI_API_TEMPERATURE = 0.7;
     public static final int OPENAI_API_MAX_TOKENS = 150;
