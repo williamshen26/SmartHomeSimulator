@@ -29,24 +29,26 @@ public class GenerateTrainingDataMain {
             JSONArray trainingData = new JSONArray();
             FileUtil.readDataRecursively(devicesDir, deviceFiles);
             for (Path file : deviceFiles) {
-                System.out.println("Found file: " + file.toString());
-                String data = FileUtil.readFileData(file.toString());
-                Set<String> availableAreas = getAvailableAreas(data);
-                data = PROMPT_DATA_BEFORE + data.replace("%", "%%") + PROMPT_DATA_AFTER;
-                data = String.format(data, getCurrentDateTime(), getCurrentDayOfWeek(), availableAreas.stream().findAny().get());
-                // get the JSON from data
-                for (String command : COMMANDS) {
-                    JSONObject json = JsonUtil.convertStringToJson(data);
-                    JSONObject userCommand = new JSONObject();
-                    userCommand.put("role", "user");
-                    userCommand.put("content", command);
-                    json.getJSONArray("data").put(userCommand);
-                    System.out.println(json.toString());
-                    JSONObject response = client.makeChatCompletionRequest(json.getJSONArray("data"));
-                    System.out.println(response.toString());
+                if (file.toString().endsWith(".csv")) {
+                    System.out.println("Found file: " + file.toString());
+                    String data = FileUtil.readFileData(file.toString());
+                    Set<String> availableAreas = getAvailableAreas(data);
+                    data = PROMPT_DATA_BEFORE + data.replace("%", "%%") + PROMPT_DATA_AFTER;
+                    data = String.format(data, getCurrentDateTime(), getCurrentDayOfWeek(), availableAreas.stream().findAny().get());
+                    // get the JSON from data
+                    for (String command : COMMANDS) {
+                        JSONObject json = JsonUtil.convertStringToJson(data);
+                        JSONObject userCommand = new JSONObject();
+                        userCommand.put("role", "user");
+                        userCommand.put("content", command);
+                        json.getJSONArray("data").put(userCommand);
+                        System.out.println(json.toString());
+                        JSONObject response = client.makeChatCompletionRequest(json.getJSONArray("data"));
+                        System.out.println(response.toString());
 
-                    JSONObject trainingObject = getTrainingObject(json, response);
-                    trainingData.put(trainingObject);
+                        JSONObject trainingObject = getTrainingObject(json, response);
+                        trainingData.put(trainingObject);
+                    }
                 }
             }
             FileUtil.saveDataToFile(String.format(TRAINING_DATA_FILE_PATH, getCurrentDateTime()), trainingData.toString());
